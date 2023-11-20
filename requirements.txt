@@ -1,3 +1,15 @@
 Flask==2.2.2
 openai==0.27.8
 PyPDF2==3.0.1
+Werkzeug
+urllib3
+python-dotenv
+MarkupSafe
+Jinja2
+idna
+colorama
+certifi
+blinker
+itsdangerous
+click
+charset-normalizer
