@@ -50,19 +50,29 @@ class FlaskAppTestCase(TestCase):
     def test_summary_generation(self):
         # TODO: Implement a test to check if the summary is correctly generated.
         # You should upload a PDF and assert that the summary is included in the response.
-        pass
+        response = self.upload_file('test_data/sample.pdf')
+        self.assertEqual(response.status_code, 200)
+        self.assertIn(b'Summary:', response.data) 
 
     # Placeholder for Exception Handling Test
     def test_exception_handling(self):
         # TODO: Implement a test to check how the application handles exceptions.
         # Consider scenarios such as uploading an invalid file or causing an internal error.
-        pass
+        response = self.upload_file('test_data/invalid_file.txt')
+        self.assertEqual(response.status_code, 500)  # Assuming the app returns a 500 status code for internal errors
+        self.assertIn(b'Error occurred', response.data)
 
     # Placeholder for Database Cache Test
     def test_database_cache(self):
         # TODO: Implement a test to verify that the database caching is working.
         # You should upload the same PDF twice and check if the second upload fetches the summary from the cache.
-        pass
+        response1 = self.upload_file('test_data/sample.pdf')
+        self.assertEqual(response1.status_code, 200)
+
+        response2 = self.upload_file('test_data/sample.pdf')
+        self.assertEqual(response2.status_code, 200)
+        self.assertIn(b'Summary:', response2.data)  # Assuming the summary is displayed with a label "Summary:"
+        self.assertNotIn(b'Error occurred', response2.data)
 
 if __name__ == '__main__':
     unittest.main()
