@@ -11,7 +11,7 @@ class PDFSummarizer:
         # Initialize Flask app and database configurations
         self.app = Flask(__name__)
         self.DATABASE = database
-        openai.api_key = openai_key or os.getenv('OPENAI_API_KEY')
+        openai.api_key = os.getenv('OPENAI_API_KEY')
         self.bind_routes()  # Setup URL routes for the application
 
     def get_db(self):
@@ -65,7 +65,11 @@ class PDFSummarizer:
         def index():
             # Render the file upload page
             return render_template('upload.html')
+        
 
+
+
+        
         @self.app.route('/upload', methods=['POST'])
         def upload_file():
             # Handle file upload and process the PDF
