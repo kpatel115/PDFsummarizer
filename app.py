@@ -2,6 +2,7 @@ from flask import Flask, render_template, request, redirect, url_for, g
 import openai
 from PyPDF2 import PdfReader
 import os
+from dotenv import load_dotenv;
 import sqlite3
 import hashlib
 
@@ -33,8 +34,8 @@ class PDFSummarizer:
             db = self.get_db()
             with self.app.open_resource('schema.sql', mode='r') as f:
                 db.cursor().executescript(f.read())
-            db.commit()
-            db.close()
+                db.commit()
+                # db.close()
 
     def extract_text_from_pdf(self, pdf_file):
         # TODO: Implement the method to extract text from a PDF file.
@@ -42,22 +43,36 @@ class PDFSummarizer:
         text = ''
         with open(pdf_file, 'rb') as file:
             reader = PdfReader(file)
-            for page_number in range(len(reader.pages())):
-                text += reader.pages(page_number).extract_text()
+            # for page_number in range(len(reader.pages())):
+            for page in reader.pages: 
+                text += page.extract_text()
 
         return text
 
     def openai_summarization(self, text):
         # TODO: Implement the method to use OpenAI for summarizing the text.
         # Use the OpenAI API to send the text and receive a summary.
-        response = openai.Completion.create(
-            engine = 'text-davinci-003',
-            prompt = text,
-            max_tokens = 150,
-            temperature = 0.8
-        )
-        return response.choices[0].text.strip()
+        try: 
+            response = openai.chat.completions.create(
+                model = 'gpt-3.5-turbo-instruct',
+                engine = 'text-davinci-003',
+                prompt = text,
+                max_tokens = 150,
+                temperature = 0,
+                stream= True
+            )
+            summary = response.choices[0].text.strip()
 
+            return summary
+        
+        except openai.OpenAIError as e:
+            print(f"An OpenAI API Error: {e}")
+            return None
+
+        except Exception as e:
+            print(f"Unknown and Unexpected Error Occured: {e}")
+            return None 
+        
     def bind_routes(self):
         # Define URL routes and their corresponding handlers
 
@@ -76,29 +91,34 @@ class PDFSummarizer:
             uploaded_file = request.files['file']
             if uploaded_file.filename == '':
                 return redirect(url_for('index'))
-
-            
-
             # TODO: Implement database caching logic.
             # Check for an existing summary in the database using the PDF's hash.
             # If it exists, use it. If not, generate a new summary, store it, and then use it.
-
             try:
                 file_path = os.path.join('./test_data', uploaded_file.filename)
                 uploaded_file.save(file_path)
+                
                 text = self.extract_text_from_pdf(file_path)
                 pdf_hash = hashlib.sha256(text.encode()).hexdigest()
                 summary = self.openai_summarization(text)
 
-                db = self.get_db()
-                db.execute('INSERT INTO summaries (pdf_hash, summary) VALUES (?, ?)', (pdf_hash, summary))
-                db.commit()
+                #if summary has a pdf hash that already exists in the database - then display that one isntead of making a new one 
+                result = db.execute('SELECT summary FROM summaries WHERE pdf_hash = ?', (pdf_hash,)).fetchone()
+                if not result:
+                    db = self.get_db()
+                    db.execute('INSERT INTO summaries (pdf_hash, summary) VALUES (?, ?)', (pdf_hash, summary))
+                    db.commit()
+                else: 
+                    return result['summary'] and render_template('summary.html', summary=summary)
+
+                # return result['summary'] if result else None
+            
             except Exception as e:
                 # Handle errors during summarization
                 print(f"Error while summarizing: {e}")
                 return "Error occurred during summarization.", 500
 
-            return render_template('summary.html', summary=summary)
+            
 
         @self.app.teardown_appcontext
         def close_connection(exception):
@@ -110,6 +130,6 @@ if __name__ == '__main__':
     app = PDFSummarizer()
     if not os.path.exists('summaries.db'):
         app.init_db()
-    app.app.run(debug=True)
+    app.app.run(debug=False)
 
 
