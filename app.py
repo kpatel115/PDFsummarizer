@@ -48,7 +48,7 @@ class PDFSummarizer:
                 text += page.extract_text()
 
         return text
-
+    '''
     def openai_summarization(self, text):
         # TODO: Implement the method to use OpenAI for summarizing the text.
         # Use the OpenAI API to send the text and receive a summary.
@@ -72,7 +72,24 @@ class PDFSummarizer:
         except Exception as e:
             print(f"Unknown and Unexpected Error Occured: {e}")
             return None 
+    '''
+
+    def openai_summarization(self, text):
+        response = openai.ChatCompletion.create(
+            model="gpt-3.5-turbo",
+            max_tokens = 150,
+            temperature = 0,
+            engine = 'text-davinci-003',
+            prompt = text,
+            messages=[
+                {"role": "user", "content": f"Provide a concise and coherent summary of the following text: {text}"},
+            ],
+            stream= True
+        )
         
+        return response["choices"][0]["message"]["content"]
+
+
     def bind_routes(self):
         # Define URL routes and their corresponding handlers
 
@@ -80,10 +97,6 @@ class PDFSummarizer:
         def index():
             # Render the file upload page
             return render_template('upload.html')
-        
-
-
-
         
         @self.app.route('/upload', methods=['POST'])
         def upload_file():
@@ -101,7 +114,7 @@ class PDFSummarizer:
                 text = self.extract_text_from_pdf(file_path)
                 pdf_hash = hashlib.sha256(text.encode()).hexdigest()
                 summary = self.openai_summarization(text)
-
+                db = self.get_db()
                 #if summary has a pdf hash that already exists in the database - then display that one isntead of making a new one 
                 result = db.execute('SELECT summary FROM summaries WHERE pdf_hash = ?', (pdf_hash,)).fetchone()
                 if not result:
