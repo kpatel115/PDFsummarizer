@@ -47,11 +47,9 @@ function Drop(event) {
       const givenFile = files[0];
 
       if (givenFile.type === 'application/pdf') {
-        // Update the UI with the new PDF file information
         updateFile();
         alert(`File "${givenFile.name}" has been uploaded`);
       } else {
-        // Display an alert if the selected file is not a PDF
         alert('Invalid file, please upload a pdf.');
       }
     }
