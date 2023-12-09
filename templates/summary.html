@@ -4,21 +4,23 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/summary.css') }}">
+    <script async defer src="{{ url_for('static', filename='javascript/summary.js') }}"></script>
     <title>Summary</title>
 </head>
 
 <body>
-    <h2>Document Summary</h2>
-    <p id="summaryText">{{ summary }}</p>
-    <button onclick="copyToClipboard()">Copy to Clipboard</button>
-    <a href="/">Upload another PDF</a>
+    <div class="container">
+        <h2>Document Summary</h2>
+        <div class="summary-box">
+            <p id="summary">{{ summary }}</p>
+            <div class="btns">
+                <button onclick="copyToClipboard()">Copy to Clipboard</button>
 
-    <script>
-        function copyToClipboard() {
-            // implement javascript code to copy the summary text to the user's clipboard. 
-            alert("Implement me in templates/summary.html!");
-        }
-    </script>
+                <button><a href="/">Upload another PDF</a></button>
+            </div>
+        </div>
+    </div>
 </body>
 
 </html>
